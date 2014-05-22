@@ -43,30 +43,24 @@ package org.dspace.app.xmlui.aspect.submission;
 import org.apache.cocoon.environment.ObjectModelHelper;
 import org.apache.cocoon.environment.Request;
 import org.apache.cocoon.environment.http.HttpEnvironment;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.log4j.Logger;
-import org.dspace.app.packager.Packager;
 import org.dspace.app.util.*;
 import org.dspace.app.xmlui.aspect.administrative.FlowResult;
-import org.dspace.app.xmlui.aspect.paymentsystem.PayPalConfirmationTransformer;
 import org.dspace.app.xmlui.utils.ContextUtil;
 import org.dspace.app.xmlui.utils.UIException;
 import org.dspace.app.xmlui.wing.Message;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.*;
 import org.dspace.content.authority.Choices;
+import org.dspace.content.authority.Concept;
+import org.dspace.content.authority.Scheme;
 import org.dspace.content.packager.PackageDisseminator;
 import org.dspace.content.packager.PackageParameters;
 import org.dspace.core.*;
 import org.dspace.eperson.EPerson;
 import org.dspace.handle.HandleManager;
-import org.dspace.paymentsystem.PaymentSystemException;
 import org.dspace.paymentsystem.PaymentSystemService;
-import org.dspace.paymentsystem.PaypalService;
 import org.dspace.paymentsystem.ShoppingCart;
-import org.dspace.storage.rdbms.DatabaseManager;
-import org.dspace.storage.rdbms.TableRow;
 import org.dspace.submit.AbstractProcessingStep;
 import org.dspace.utils.DSpace;
 import org.dspace.workflow.*;
@@ -77,7 +71,6 @@ import javax.mail.MessagingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.File;
@@ -752,6 +745,7 @@ public class FlowUtils {
                     if(shoppingCart.getTotal()==0||shoppingCart.getStatus().equals(ShoppingCart.STATUS_COMPLETED)||shoppingCart.getStatus().equals(ShoppingCart.STATUS_VERIFIED))
                     {
                         //already entered cc information
+                        //checkJournalSubscriptionCredit(request, context, publication);
                         finishSubmission(request, context, publication);
                         return request.getContextPath() + "/deposit-confirmed?itemID=" + publication.getID();
                     }
@@ -863,6 +857,7 @@ public class FlowUtils {
         if(request.getParameter(AbstractProcessingStep.NEXT_BUTTON) != null||request.getParameter("skip_payment") != null){
             if(workItem instanceof WorkspaceItem){
                 EventLogger.log(context, "submission-checkout", "button=done");
+                //checkJournalSubscriptionCredit(request, context, publication);
                 finishSubmission(request, context, publication);
                 return request.getContextPath() + "/deposit-confirmed?itemID=" + publication.getID();
             } else {
@@ -911,7 +906,63 @@ public class FlowUtils {
         return request.getContextPath() + "/submissions";
     }
 
+    private static void checkJournalSubscriptionCredit(Request request, Context context, Item publication) throws SQLException, AuthorizeException, IOException, TransformerException, WorkflowException, SAXException, WorkflowConfigurationException, MessagingException, ParserConfigurationException {
+        //handle the journal integeration check
+        ArrayList<ShoppingCart> shoppingCarts = ShoppingCart.findAllByItem(context, publication.getID());
 
+        Scheme scheme = Scheme.findByIdentifier(context,"prism.publicationName");
+        for(ShoppingCart shoppingCart:shoppingCarts)
+        {
+            if(shoppingCart.getJournalSub() )
+            {
+
+                Concept[] journals = Concept.findByPreferredLabel(context, shoppingCart.getJournal(),scheme.getID() );
+                if(journals!=null&&journals.length>0)  {
+                    Concept journal = journals[0];
+                    if(journal!=null&&journal.getMetadata("internal","journal","subscriptionPaid",Item.ANY)!=null&&journal.getMetadata("internal","journal","subscriptionPaid",Item.ANY)[0].equals("true")){
+                    try{
+                        //We have completed everything time to start our dataset
+
+                        //check credit
+                        LoadCustomerCredit loadCustomerCredit = new LoadCustomerCredit();
+                        String credit = loadCustomerCredit.loadCredit(shoppingCart.getJournal());
+                        if(credit!=null)
+                        {
+                            Integer creditLeft = Integer.parseInt(credit);
+                            if(creditLeft>0)
+                            {
+                                creditLeft = creditLeft-1;
+                                //update credit in asscociation anywhere
+                                 loadCustomerCredit.updateCredit(shoppingCart.getJournal());
+
+                            }
+                            else {
+                                //no enough credit left
+                                setShoppingCartStatus(context,shoppingCart);
+                            }
+                        }
+                        else
+                        {
+                             setShoppingCartStatus(context,shoppingCart);
+                        }
+
+                    }catch (Exception e){
+                        //if any errors happened in journal integration credit check, then set the shopping cart journal integeration to be null and recaculate the total
+                        setShoppingCartStatus(context,shoppingCart);
+                        log.error("Exception during CompleteSubmissionStep: ", e);
+                        throw new RuntimeException(e);
+                    }
+                }
+                }
+            }
+        }
+    }
+    private static void setShoppingCartStatus(Context context,ShoppingCart shoppingCart)throws SQLException{
+        shoppingCart.setStatus(ShoppingCart.STATUS_DENIlED);
+        shoppingCart.setJournalSub(false);
+        PaymentSystemService paymentSystemService = new DSpace().getSingletonService(PaymentSystemService.class);
+        shoppingCart.setTotal(paymentSystemService.calculateShoppingCartTotalWithoutJournal(context,shoppingCart));
+    }
 
 
     private static void finishSubmission(Request request, Context context, Item publication) throws SQLException, AuthorizeException, IOException, TransformerException, WorkflowException, SAXException, WorkflowConfigurationException, MessagingException, ParserConfigurationException {
