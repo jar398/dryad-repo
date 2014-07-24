@@ -79,14 +79,14 @@ public class SolrAuthorityServiceImpl implements AuthorityIndexingService, Autho
         String fullText = "";
         for (AuthorityMetadataValue value:concept.getMetadata())
         {
-            fullText = fullText+value.getValue();
+            fullText = fullText+" , "+value.getValue();
         }
         // Set all terms as full text for search and term completion.
         for(Term term : concept.getTerms() )
         {
-            fullText = fullText + term.getLiteralForm();
+            fullText = fullText +" , "+ term.getLiteralForm();
         }
-        authorityValue.setFullText(authorityValue.getFullText() + fullText);
+        authorityValue.setFullText(fullText);
         if(concept.getScheme()!=null)
             authorityValue.setField(concept.getScheme().getIdentifier().replace(".","_"));
         return authorityValue;
