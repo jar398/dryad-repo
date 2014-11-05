@@ -34,13 +34,13 @@
 
     <dependencies>
 
-       <!-- ***** JAR 2014-11-04 ***** -->
-       <!-- DSpace API -->
-       <dependency>
-           <groupId>org.dspace.modules</groupId>
-           <artifactId>api</artifactId>
-           <version>${project.version}</version>
-       </dependency>
+        <!-- ***** JAR 2014-11-04 ***** -->
+        <!-- DSpace API -->
+        <dependency>
+            <groupId>org.dspace.modules</groupId>
+            <artifactId>api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Leave this out for the moment, as the source is in the tree -->
         <!--
