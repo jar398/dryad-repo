@@ -39,6 +39,10 @@ public class DSpaceSWORDServer implements SWORDServer
 	// methods required by SWORDServer interface
 	////////////////////////////////////////////
 
+    public DSpaceSWORDServer() {
+	org.dspace.sword.LoadDSpaceConfig.init();
+    }
+
 	/* (non-Javadoc)
 	 * @see org.purl.sword.SWORDServer#doServiceDocument(org.purl.sword.base.ServiceDocumentRequest)
 	 */
