@@ -111,6 +111,13 @@
    </profiles>
 
    <dependencies>
+       <!-- Dryad API -->
+      <dependency>
+         <groupId>org.dspace.modules</groupId>
+         <artifactId>api</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
       <dependency>
          <groupId>org.dspace</groupId>
          <artifactId>dspace-sword-webapp</artifactId>
@@ -120,10 +127,12 @@
          <groupId>org.dspace</groupId>
          <artifactId>dspace-sword-api</artifactId>
       </dependency>
+      <!-- 
       <dependency>
          <groupId>org.dspace</groupId>
          <artifactId>dspace-discovery-provider</artifactId>
       </dependency>
+ -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>

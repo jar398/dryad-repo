@@ -40,6 +40,7 @@
         <module>payment-system</module>
         <module>dryad-rest-webapp</module>
         <!--module>solr-load-tester</module-->
+        <module>sword</module>
 	</modules>
 
 
@@ -130,6 +131,12 @@
                    <artifactId>payment-webapp</artifactId>
                    <version>${pom.version}</version>
                    <type>war</type>
+               </dependency>
+
+               <dependency>
+                   <groupId>org.dspace.modules</groupId>
+                   <artifactId>sword</artifactId>
+                   <version>${pom.version}</version>
                </dependency>
 
 
