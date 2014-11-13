@@ -14,6 +14,11 @@ public class WorkflowConfigurationException extends Exception{
         this.error = error;
     }
 
+    public WorkflowConfigurationException(String error, Throwable cause){
+	super(error, cause);
+        this.error = error;
+    }
+
     public String toString(){
         return this.error;
     }
