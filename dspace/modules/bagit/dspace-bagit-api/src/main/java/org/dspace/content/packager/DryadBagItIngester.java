@@ -1,4 +1,4 @@
-package org.datadryad.packager;
+package org.dspace.content.packager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +28,13 @@ import org.dspace.content.packager.PackageException;
 import org.dspace.content.packager.PackageParameters;
 import org.dspace.core.ConfigurationManager;
 
+import org.dspace.content.packager.AbstractPackageIngester;
+import org.dspace.content.packager.PackageValidationException;
+import org.dspace.core.Context;
+
+import org.datadryad.api.DryadDataPackage;
+import org.datadryad.api.DryadDataFile;
+
 /*
   Modeled after:
   dspace-api/src/main/java/org/dspace/content/packager/AbstractMETSIngester.java:
@@ -48,37 +55,41 @@ import org.dspace.core.ConfigurationManager;
 public class DryadBagItIngester
         extends AbstractPackageIngester
 {
-	private static final Logger LOGGER = Logger.getLogger(DryadBagItIngester.class);
+    /** Log4j logger */
+    private static final Logger mylog = Logger.getLogger(DryadBagItIngester.class);
 
     List<ZipEntry[]> entries;
     ZipEntry dryadpkg = null, dryadpub = null;
 
     @Override
-    DSpaceObject ingest(Context context, DSpaceObject parent, File pkgFile,
+    public DSpaceObject ingest(Context context, DSpaceObject parent, File pkgFile,
                         PackageParameters params, String license)
         throws PackageException, CrosswalkException,
                AuthorizeException, SQLException, IOException
     {
+	mylog.info("Parsing package, file=" + pkgFile.getName());
         ZipFile zip = new ZipFile(pkgFile);
         parseZip(zip);
 
-        System.out.format("pkg: %s %s\n", dryadpkg.getName(), dryadpkg.getSize());
-        System.out.format("pub: %s %s\n", dryadpub.getName(), dryadpub.getSize());
+        mylog.info(String.format("pkg: %s %s", dryadpkg.getName(), dryadpkg.getSize()));
+	mylog.info(String.format("pub: %s %s", dryadpub.getName(), dryadpub.getSize()));
 
-        // dp = DryadDataPackage.create(context)
+        DryadDataPackage dp = DryadDataPackage.createInWorkflow(context);
+	// Do data package crosswalk
+	// Do publication crosswalk (!?)
+	// DryadDataPackage.setPublicationDOI(...)
 
         // {metadata, content}
         for (ZipEntry[] entryPair : entries) {
-            System.out.format("%s %s\n", entryPair[0].getName(), entryPair[1].getName());
-            // Create Item
-            // df = DryadDataFile.create(context, dataPackage)
-            // df.addBitstream(zip.getInputStream(entry))
-            // Do crosswalk
+	    ZipEntry metadata = entryPair[0];
+	    ZipEntry data = entryPair[1];
+            mylog.info(String.format("Processing: %s %s", metadata.getName(), data.getName()));
+            DryadDataFile df = DryadDataFile.create(context, dp);
+            df.addBitstream(zip.getInputStream(data));
+            // Do data file crosswalk
         }
         zip.close();
-
-        // DSpaceObject ...?
-        return null;
+        return dp.getItem();
     }
 
     // Computes:
@@ -134,7 +145,7 @@ public class DryadBagItIngester
                     InputStreamReader r = new InputStreamReader(zip.getInputStream(entry));
                     char[] buf = new char[1000];
                     int howmany = r.read(buf, 0, 1000);
-                    System.out.println(new String(buf, 0, howmany));
+                    mylog.info(new String(buf, 0, howmany));
                 }
             }
         }
@@ -161,7 +172,7 @@ public class DryadBagItIngester
     }
 
     @Override
-    DSpaceObject replace(Context context, DSpaceObject dso,
+    public DSpaceObject replace(Context context, DSpaceObject dso,
                          File pkgFile, PackageParameters params)
         throws PackageException, UnsupportedOperationException,
                CrosswalkException, AuthorizeException,
@@ -171,7 +182,7 @@ public class DryadBagItIngester
     }
 
     @Override
-    String getParameterHelp() {
+    public String getParameterHelp() {
         return null;
     }
 
