@@ -18,6 +18,7 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.sql.SQLException;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
@@ -27,6 +28,12 @@ import org.dspace.content.DSpaceObject;
 import org.dspace.content.packager.PackageException;
 import org.dspace.content.packager.PackageParameters;
 import org.dspace.core.ConfigurationManager;
+import org.dspace.identifier.IdentifierException;
+import org.dspace.identifier.IdentifierService;
+import org.dspace.utils.DSpace;
+import org.dspace.content.Item;
+import org.dspace.content.Collection;
+import org.dspace.content.WorkspaceItem;
 
 import org.dspace.content.packager.AbstractPackageIngester;
 import org.dspace.content.packager.PackageValidationException;
@@ -74,7 +81,8 @@ public class DryadBagItIngester
         mylog.info(String.format("pkg: %s %s", dryadpkg.getName(), dryadpkg.getSize()));
 	mylog.info(String.format("pub: %s %s", dryadpub.getName(), dryadpub.getSize()));
 
-        DryadDataPackage dp = DryadDataPackage.createInWorkflow(context);
+        DryadDataPackage dp = createDataPackage(context);
+
 	// Do data package crosswalk
 	// Do publication crosswalk (!?)
 	// DryadDataPackage.setPublicationDOI(...)
@@ -90,6 +98,28 @@ public class DryadBagItIngester
         }
         zip.close();
         return dp.getItem();
+    }
+
+    DryadDataPackage createDataPackage(Context context) throws AuthorizeException, SQLException, IOException
+    {
+        Collection collection = DryadDataPackage.getCollection(context);
+        WorkspaceItem wsi = WorkspaceItem.create(context, collection, true);
+        Item item = wsi.getItem();
+        DryadDataPackage dataPackage = new DryadDataPackage(item);
+        try {
+            // Compare dataPackage.createIdentifier(context);
+            IdentifierService service = new DSpace().getSingletonService(IdentifierService.class);
+            service.reserve(context, item);
+        } catch (IdentifierException ex) {
+            mylog.error("Identifier exception creating a data package", ex);
+        }
+
+        // Compare dataPackage.addToCollectionAndArchive(collection);
+        collection.addItem(item);
+        dataPackage.setDateAccessioned(new Date()); // does item update
+        collection.update();
+        item.update();
+        return dataPackage;
     }
 
     // Computes:
