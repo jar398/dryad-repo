@@ -5,7 +5,6 @@
 	<artifactId>bagit-api</artifactId>
 	<packaging>jar</packaging>
 	<name>DSpace BagIt :: API</name>
-	<version>0.0.1</version>
 
 	<description> DSpace BagIt Scripts </description>
 
