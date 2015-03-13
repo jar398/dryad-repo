@@ -19,11 +19,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.sql.SQLException;
 import java.util.Date;
+import org.jdom.input.SAXBuilder;
+import org.jdom.JDOMException;
 
 import org.apache.log4j.Logger;
 
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.crosswalk.CrosswalkException;
+import org.dspace.content.crosswalk.MetadataValidationException;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.packager.PackageException;
 import org.dspace.content.packager.PackageParameters;
@@ -83,7 +86,28 @@ public class DryadBagItIngester
 
         DryadDataPackage dp = createDataPackage(context);
 
-	// Do data package crosswalk
+        /*
+
+	// Get package metadata as XML document
+        SAXBuilder builder = new SAXBuilder(false);
+        builder.setIgnoringElementContentWhitespace(true);
+        Document pkgDocument;
+        try {
+            pkgDocument = builder.build(zip.getInputStream(dryadpkg));
+        }
+        catch (JDOMException je) {
+            throw new MetadataValidationException("Error validating DMAP in "
+                    + dryadpkg.getName(),  je);
+        }
+
+        // Get crosswalk plugin
+        IngestionCrosswalk xwalk = (IngestionCrosswalk) PluginManager
+				.getNamedPlugin(IngestionCrosswalk.class, "DRYAD-V3-1-INGEST");
+
+        xwalk.ingest(context, dp, pkdDocument.getRootElement());
+
+        */
+
 	// Do publication crosswalk (!?)
 	// DryadDataPackage.setPublicationDOI(...)
 
