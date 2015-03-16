@@ -345,7 +345,7 @@ public class DepositServlet extends HttpServlet {
 		
 		finally {
 			// Try deleting the temp file
-			if (filename != null) {
+			if (filename != null && false) { // **** TEMPORARY ****
 				File f = new File(filename);
 				if (f != null && !f.delete())
                 {

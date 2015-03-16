@@ -58,6 +58,8 @@ import javax.security.auth.login.Configuration;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import org.apache.log4j.Logger;
+
 /**
  * This step is used when the a user clicks an unfinished submission
  * from the submissions page. Here we present the full item and then
@@ -76,6 +78,9 @@ import java.sql.SQLException;
  */
 public class ResumeStep extends AbstractStep
 {
+    /** Log4j logger */
+    private static final Logger log = Logger.getLogger(ResumeStep.class);
+
 	/** Language Strings **/
     protected static final Message T_submit_resume =
         message("xmlui.Submission.submit.ResumeStep.submit_resume");
@@ -99,6 +104,8 @@ public class ResumeStep extends AbstractStep
 		org.dspace.content.Item item = submission.getItem();
 		Collection collection = submission.getCollection();
 		String actionURL = contextPath + "/handle/"+collection.getHandle() + "/submit/" + knot.getId() + ".continue";
+
+                log.info("item = " + item.getID());
 
 		Request request = ObjectModelHelper.getRequest(objectModel);
 		String showfull = request.getParameter("showfull");
@@ -135,10 +142,12 @@ public class ResumeStep extends AbstractStep
         WorkspaceItem pubWs = null;
         if(pubItem != null){
             pubWs = WorkspaceItem.findByItemId(context, pubItem.getID());
+            log.info("pubItem " + pubItem.getID());
         }
 
 
         if(pubWs != null){
+            log.info("pubWs " + pubWs.getID());
             //Our publication is still a workspaceItem so euhm we haven't finished it
             //Check if perhaps we are awaiting datasets in which case a resume is allowed
             DCValue[] wfStatus = pubWs.getItem().getMetadata("internal", "workflow", "submitted", org.dspace.content.Item.ANY);
@@ -146,7 +155,7 @@ public class ResumeStep extends AbstractStep
                 publicationNotSubmitted = true;
         }
 
-
+        log.info("not submitted = " + publicationNotSubmitted);
 
         if(publicationNotSubmitted){
             List form = div.addList("resume-submission",List.TYPE_FORM);
@@ -168,6 +177,7 @@ public class ResumeStep extends AbstractStep
             table.setHead(T_ACTIONS_HEAD);
             //We have something that has already gone through the workflow, so show the controls !
             boolean isPublication = ConfigurationManager.getProperty("submit.publications.collection").equals(submission.getCollection().getHandle());
+            log.info("is publication = " + isPublication);
             if(isPublication){
                 //We have a publication
                 //They get the choice to push it to the reviewer(s)
@@ -187,6 +197,7 @@ public class ResumeStep extends AbstractStep
                 String url = contextPath + "/submissions";
                 org.dspace.content.Item publication = DryadWorkflowUtils.getDataPackage(context, item);
                 if(publication != null){
+                    log.info("data package = " + publication.getID());
                     //We have a publication but we need the workspaceId
                     WorkspaceItem wsPub = WorkspaceItem.findByItemId(context, publication.getID());
                     url = contextPath + "/submit?workspaceID=" + wsPub.getID();
@@ -202,9 +213,12 @@ public class ResumeStep extends AbstractStep
             Row row = table.addRow();
             row.addCell().addContent("Return to the submission page");
             row.addCell().addButton("submit_cancel").setValue(T_submit_cancel);
+            log.info("cancelable");
 
         }else{
             List form = div.addList("resume-submission",List.TYPE_FORM);
+
+            log.info("resumable");
 
             org.dspace.app.xmlui.wing.element.Item actions = form.addItem();
             actions.addButton("submit_resume").setValue(T_submit_resume);
