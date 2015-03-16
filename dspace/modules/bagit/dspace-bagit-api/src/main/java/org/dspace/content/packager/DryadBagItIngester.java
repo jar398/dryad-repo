@@ -21,11 +21,14 @@ import java.sql.SQLException;
 import java.util.Date;
 import org.jdom.input.SAXBuilder;
 import org.jdom.JDOMException;
+import org.jdom.Document;
 
 import org.apache.log4j.Logger;
 
+import org.dspace.core.PluginManager;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.crosswalk.CrosswalkException;
+import org.dspace.content.crosswalk.IngestionCrosswalk;
 import org.dspace.content.crosswalk.MetadataValidationException;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.packager.PackageException;
@@ -86,14 +89,13 @@ public class DryadBagItIngester
 
         DryadDataPackage dp = createDataPackage(context);
 
-        /*
-
 	// Get package metadata as XML document
         SAXBuilder builder = new SAXBuilder(false);
         builder.setIgnoringElementContentWhitespace(true);
         Document pkgDocument;
         try {
             pkgDocument = builder.build(zip.getInputStream(dryadpkg));
+            mylog.info(String.format("Got document for %s", dryadpkg.getName()));
         }
         catch (JDOMException je) {
             throw new MetadataValidationException("Error validating DMAP in "
@@ -101,15 +103,18 @@ public class DryadBagItIngester
         }
 
         // Get crosswalk plugin
+        String xwalkName = "DRYAD-V3-1-INGEST";
         IngestionCrosswalk xwalk = (IngestionCrosswalk) PluginManager
-				.getNamedPlugin(IngestionCrosswalk.class, "DRYAD-V3-1-INGEST");
-
-        xwalk.ingest(context, dp, pkdDocument.getRootElement());
-
-        */
+				.getNamedPlugin(IngestionCrosswalk.class, xwalkName);
+        if (xwalk == null)
+            mylog.error("No such crosswalk: " + xwalkName);
+        else {
+            mylog.info("Got crosswalk for " + xwalkName);
+            xwalk.ingest(context, dp.getItem(), pkgDocument.getRootElement());
+            mylog.info("Ingested metadata");
+        }
 
 	// Do publication crosswalk (!?)
-	// DryadDataPackage.setPublicationDOI(...)
 
         // {metadata, content}
         for (ZipEntry[] entryPair : entries) {
