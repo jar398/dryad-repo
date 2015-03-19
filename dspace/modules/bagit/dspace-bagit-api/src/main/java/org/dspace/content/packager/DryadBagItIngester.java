@@ -40,6 +40,7 @@ import org.dspace.utils.DSpace;
 import org.dspace.content.Item;
 import org.dspace.content.Collection;
 import org.dspace.content.WorkspaceItem;
+import org.dspace.content.DCValue;
 
 import org.dspace.content.packager.AbstractPackageIngester;
 import org.dspace.content.packager.PackageValidationException;
@@ -47,6 +48,7 @@ import org.dspace.core.Context;
 
 import org.datadryad.api.DryadDataPackage;
 import org.datadryad.api.DryadDataFile;
+import org.datadryad.api.DryadObject;
 
 /*
   Modeled after:
@@ -114,6 +116,16 @@ public class DryadBagItIngester
             mylog.info("Ingested metadata");
         }
 
+        // public DCValue[] Item.getMetadata(schema, element, qualifier, Item.ANY)
+        // dc.relation.isreferencedby
+
+        DCValue[] values = dp.getItem().getMetadata("dc", "relation", "isreferencedby", Item.ANY);
+        if (values != null && values.length > 0) {
+            mylog.info("Processing DOI");
+            org.dspace.submit.step.IdentifierProcessor.processDOI(context, dp.getItem(), values[0].value);
+        } else
+            mylog.info("No DOI to process");
+
 	// Do publication crosswalk (!?)
 
         // {metadata, content}
@@ -121,7 +133,7 @@ public class DryadBagItIngester
 	    ZipEntry metadata = entryPair[0];
 	    ZipEntry data = entryPair[1];
             mylog.info(String.format("Processing: %s %s", metadata.getName(), data.getName()));
-            DryadDataFile df = DryadDataFile.create(context, dp);
+            DryadDataFile df = createDataFile(context, dp);
             df.addBitstream(zip.getInputStream(data));
             // Do data file crosswalk
         }
@@ -143,12 +155,55 @@ public class DryadBagItIngester
             mylog.error("Identifier exception creating a data package", ex);
         }
 
-        // Compare dataPackage.addToCollectionAndArchive(collection);
-        collection.addItem(item);
-        dataPackage.setDateAccessioned(new Date()); // does item update
-        collection.update();
-        item.update();
+        addToCollection(dataPackage, collection);
         return dataPackage;
+    }
+
+    DryadDataFile createDataFile(Context context, DryadDataPackage dataPackage) throws SQLException
+    {
+        // return DryadDataFile.create(context, dataPackage);
+        DryadDataFile dataFile = null;
+        Collection collection = DryadDataFile.getCollection(context);
+        try {
+            WorkspaceItem wsi = WorkspaceItem.create(context, collection, true);
+            Item item = wsi.getItem();
+            dataFile = new DryadDataFile(item);
+            // setIsPartOf would be superior, but it's not public
+            // dataFile.setIsPartOf(dataPackage);
+            item.addMetadata("dc", "relation", "ispartof", Item.ANY, dataPackage.getIdentifier());
+            // dataPackage.clearDataFilesCache();  -- also private, hope it doesn't matter
+            // dataFile.createIdentifier(context); would be better but not public
+            IdentifierService service = new DSpace().getSingletonService(IdentifierService.class);
+            service.reserve(context, item);
+
+            // setHasPart would be superior, but it's not public
+            // dataPackage.setHasPart(dataFile);
+            dataPackage.getItem().addMetadata("dc", "relation", "haspart", Item.ANY, dataFile.getIdentifier());
+            addToCollection(dataFile, collection);
+        } catch (IdentifierException ex) {
+            mylog.error("Identifier exception creating a Data File", ex);
+        } catch (AuthorizeException ex) {
+            mylog.error("Authorize exception creating a Data File", ex);
+        } catch (IOException ex) {
+            mylog.error("IO exception creating a Data File", ex);
+        }
+        return dataFile;
+    }
+
+    // Compare obj.addToCollectionAndArchive(collection);
+    void addToCollection(DryadObject obj, Collection collection) throws SQLException {
+        Item item = obj.getItem();
+        item.setOwningCollection(collection);
+        try {
+            collection.addItem(item);
+            obj.setDateAccessioned(new Date()); // does item update
+            item.update();
+            collection.update();
+        } catch (AuthorizeException ex) {
+            mylog.error("Authorize exception adding to collection", ex);
+        } catch (IOException ex) {
+            mylog.error("IO exception adding to collection", ex);
+        }
     }
 
     // Computes:
