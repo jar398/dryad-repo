@@ -43,6 +43,7 @@
         <module>dryad-widgets</module>
         <module>journal-landing</module>
         <!--module>solr-load-tester</module-->
+        <module>sword</module>
 	</modules>
 
 
@@ -138,6 +139,14 @@
                <dependency>
                    <groupId>org.dspace.modules</groupId>
                    <artifactId>dryad-widgets-webapp</artifactId>
+                   <type>jar</type>
+                   <classifier>classes</classifier>
+                   <version>${pom.version}</version>
+               </dependency>
+
+               <dependency>
+                   <groupId>org.dspace.modules</groupId>
+                   <artifactId>sword</artifactId>
                    <type>jar</type>
                    <classifier>classes</classifier>
                    <version>${pom.version}</version>
