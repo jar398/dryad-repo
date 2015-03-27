@@ -47,6 +47,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.dspace.modules</groupId>
+			<artifactId>api</artifactId>
+        		<version>1.7.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>org.dspace</groupId>
 			<artifactId>dspace-api</artifactId>
 		</dependency>
@@ -75,6 +80,13 @@
 			<artifactId>jersey-multipart</artifactId>
 			<version>1.4</version>
 		</dependency>
+
+		<!-- copied from dspace-doi-api -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+
 	</dependencies>
 
 </project>

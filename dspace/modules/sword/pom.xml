@@ -113,14 +113,14 @@
    <dependencies>
       <!-- Dspace API -->
       <dependency>
-         <groupId>org.dspace</groupId>
-         <artifactId>dspace-api</artifactId>
+         <groupId>org.dspace.modules</groupId>
+         <artifactId>api</artifactId>
          <version>${project.version}</version>
       </dependency>
 
       <dependency>
-         <groupId>org.dspace.modules</groupId>
-         <artifactId>api</artifactId>
+         <groupId>org.dspace</groupId>
+         <artifactId>dspace-api</artifactId>
          <version>${project.version}</version>
       </dependency>
 
@@ -131,7 +131,13 @@
          <version>${project.version}</version>
       </dependency>
 
-      <!-- Need bagit ??? -->
+      <!-- Need bagit -->
+      <dependency>
+         <groupId>org.dspace.modules</groupId>
+         <artifactId>bagit-api</artifactId>
+         <version>0.0.1</version>
+      </dependency>
+
       <!-- Need versioning-api ? -->
 
       <!-- Need this due to spring configuration -->
