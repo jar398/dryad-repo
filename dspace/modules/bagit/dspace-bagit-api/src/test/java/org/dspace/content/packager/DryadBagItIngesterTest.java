@@ -50,9 +50,14 @@ public class DryadBagItIngesterTest extends ContextUnitTest {
         DryadBagItIngester dbi = new DryadBagItIngester();
         DSpaceObject dso = dbi.ingest(context, null, file, null, null);
         assertTrue("ingested an Item", dso instanceof Item);
+        Item dp = (Item)dso;
         // TBD: check the partof structure
-        DCValue[] values = ((Item)dso).getMetadata("dc", "relation", "isreferencedby", Item.ANY);
+        DCValue[] values = dp.getMetadata("dc", "relation", "isreferencedby", Item.ANY);
         assertTrue("nonnull isreferencedby", values != null);
         assertTrue("at least one isreferencedby", values.length > 0);
+        // Does Crossref fetch work?
+        DCValue[] values2 = dp.getMetadata("dc", "title", Item.ANY, Item.ANY);
+        assertTrue("nonnull title", values2 != null);
+        assertTrue("at least one title", values2.length > 0);
     }
 }

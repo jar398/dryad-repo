@@ -26,18 +26,20 @@ import org.jdom.Document;
 import org.apache.log4j.Logger;
 
 import org.dspace.core.PluginManager;
+import org.dspace.core.ConfigurationManager;
+import org.dspace.core.Context;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.crosswalk.CrosswalkException;
 import org.dspace.content.crosswalk.IngestionCrosswalk;
 import org.dspace.content.crosswalk.MetadataValidationException;
 import org.dspace.content.DSpaceObject;
+import org.dspace.content.Item;
+import org.dspace.content.DCValue;
 import org.dspace.content.packager.PackageException;
 import org.dspace.content.packager.PackageParameters;
-import org.dspace.core.ConfigurationManager;
-
 import org.dspace.content.packager.AbstractPackageIngester;
 import org.dspace.content.packager.PackageValidationException;
-import org.dspace.core.Context;
+import org.dspace.submit.step.SelectPublicationStep;
 
 import org.datadryad.api.DryadDataPackage;
 import org.datadryad.api.DryadDataFile;
@@ -111,7 +113,15 @@ public class DryadBagItIngester
             mylog.info("Ingested metadata");
         }
 
-	// Do publication crosswalk (!?)
+	// TBD: do publication crosswalk on dryadpub (!? maybe no useful information there)
+
+        // Fill in article metadata by consult Crossref
+        DCValue[] values = dp.getItem().getMetadata("dc", "relation", "isreferencedby", Item.ANY);
+        if (values != null && values.length > 0) {
+            mylog.info("Processing DOI");
+            SelectPublicationStep.processDOI(context, dp.getItem(), values[0].value);
+        } else
+            mylog.info("No DOI to process");
 
         // {metadata, content}
         for (ZipEntry[] entryPair : entries) {
