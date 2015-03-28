@@ -6,7 +6,9 @@ import java.util.zip.ZipFile;
 import org.apache.log4j.Logger;
 import org.datadryad.test.ContextUnitTest;
 import org.dspace.content.DSpaceObject;
+import org.dspace.content.DCValue;
 import org.dspace.content.Item;
+import org.dspace.core.ConfigurationManager;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -42,9 +44,15 @@ public class DryadBagItIngesterTest extends ContextUnitTest {
 
     @Test
     public void testIngest() throws Exception {
+        assertTrue("stylesheet defined",
+                   ConfigurationManager.getProperty("crosswalk.submission.DRYAD-V3-1-INGEST.stylesheet")
+                   != null);
         DryadBagItIngester dbi = new DryadBagItIngester();
         DSpaceObject dso = dbi.ingest(context, null, file, null, null);
         assertTrue("ingested an Item", dso instanceof Item);
-        // TBD: check the partof structure and metadata
+        // TBD: check the partof structure
+        DCValue[] values = ((Item)dso).getMetadata("dc", "relation", "isreferencedby", Item.ANY);
+        assertTrue("nonnull isreferencedby", values != null);
+        assertTrue("at least one isreferencedby", values.length > 0);
     }
 }

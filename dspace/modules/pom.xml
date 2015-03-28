@@ -89,6 +89,19 @@
 
                <dependency>
                    <groupId>org.dspace.modules</groupId>
+                   <artifactId>dspace-bagit-webapp</artifactId>
+                   <type>war</type>
+                   <version>${pom.version}</version>
+               </dependency>
+
+               <dependency>
+                   <groupId>org.dspace.modules</groupId>
+                   <artifactId>dspace-bagit-api</artifactId>
+                   <version>${pom.version}</version>
+               </dependency>
+
+               <dependency>
+                   <groupId>org.dspace.modules</groupId>
                    <artifactId>doi-service</artifactId>
                    <version>${pom.version}</version>
                </dependency>
