@@ -1,9 +1,11 @@
-/** THIS IS A COPY/PASTE JOB FROM SWORDMETSIngester.java.
-   It would be better to do this using an abstract class, which
-   SWORDMETSIngester and SWORDDryadBagItIngester would then subclass,
-   but that would require a change to the dspace-sword-api module,
-   which would violate the policy that all Dryad-specific
-   modifications are under modules/.  */
+/** THIS IS A COPY/PASTE JOB FROM SWORDMETSIngester.java - it is
+   identical to that class except in one spot.
+   It would be better to parameterize using an abstract class, which
+   SWORDMETSIngester and SWORDDryadBagItIngester would then subclass.
+   That is a nontrivial undertaking that I didn't want to do,
+   especially given the plan to update Dryad to a more recent DSpace
+   release, which might change all this code anyhow.
+*/
 
 /**
  * The contents of this file are subject to the license and copyright

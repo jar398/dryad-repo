@@ -82,6 +82,12 @@ public class WorkflowManager {
         return wfi;
     }
 
+    /* The following is a dummy definition - it doesn't do what it
+     * says it does.  A correct version of this method is present in
+     * newer versions of DSpace.  Dryad doesn't need it; it only needs
+     * for it to be defined, because it's referenced in unused parts
+     * of the SWORD package. */
+
     public static WorkflowItem startWithoutNotify(Context c, WorkspaceItem wsi)
             throws SQLException, AuthorizeException, IOException
     {

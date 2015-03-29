@@ -1,3 +1,28 @@
+/*
+  This is the ingester for BagIt for packages that are in Dryad's
+  particular format.  A package here (e.g. from a SWORD deposit) is a
+  .zip file.  Dryad's format is as follows: 
+
+  The data/ directory contains 
+  (1) dryadpkg.xml, metadata for the Dryad package in DMAP form
+  (2) dryadpub.xml, metadata for the publication in DMAP form
+  (3) one directory per data file, each one containing the file and a
+      .xml file containing data file metadata
+
+  In addition to processing the DMAP (Dryad metadata application
+  format) metadata, this code consults Crossref to fill in
+  bibliographic information.
+
+  The data package is left in a workspace; unlike the METS ingester,
+  it is not submitted to a workflow.
+
+  This class uses instance variables that are specific to one ingest.
+  I don't know whether the instance gets reused for multiple ingests;
+  if it is then we may have contention, and the code should be changed
+  to created separate instances (of some new class), one per ingest.
+
+*/
+
 package org.dspace.content.packager;
 
 import java.io.File;
